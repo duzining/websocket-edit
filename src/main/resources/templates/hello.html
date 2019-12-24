@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>Document</title>
+    <script type="text/javascript">
+        function upload(input) {
+            //支持chrome IE10
+            if (window.FileReader) {
+                var file = input.files[0];
+                filename = file.name.split(".")[0];
+                var reader = new FileReader();
+                reader.onload = function() {
+                    console.log(this.result);
+                    document.getElementById("#output").innerHTML=this.result;
+                }
+                reader.readAsText(file);
+            }
+
+        }
+    </script>
+</head>
+<body>
+<input type="file" onchange="upload(this)" />
+<div id="#output"></div>
+</body>
+</html>

@@ -1,0 +1,165 @@
+<!DOCTYPE HTML>
+<html xmlns:th="http://www.w3.org/1999/xhtml">
+<head>
+    <title>WebSocket</title>
+    <script th:src="@{js/jquery.min.js}"></script>
+    <style>
+        #message {
+            min-height: 120px;
+            border: 2px solid #aaa;
+        }
+        #message1 {
+            min-height: 120px;
+            border: 2px solid #aaa;
+        }
+    </style>
+    <script type="text/javascript">
+        var websocket = null;
+
+        //判断当前浏览器是否支持WebSocket
+        if('WebSocket' in window){
+            websocket = new WebSocket("ws://localhost:8080/websocket");
+        }
+        else{
+            alert('Not support websocket')
+        }
+
+        //连接发生错误的回调方法
+        websocket.onerror = function(){
+            setMessageInnerHTML("error");
+        };
+
+        //连接成功建立的回调方法
+        websocket.onopen = function(event){
+            // setMessageInnerHTML("open");
+        }
+
+        //接收到消息的回调方法
+        websocket.onmessage = function(event){
+            var data = event.data;
+            var lastStr = data[data.length-1];
+
+            /*<![CDATA[*/
+           if (lastStr =="1" && data.length>2) {
+               var message = data.substr(0, data.length - 1);
+               setMessageInnerHTML(message);
+
+           }else if (lastStr == "2" && data.length>2) {
+               var message = data.substr(0, data.length - 1);
+               setMessageInnerHTML1(message);
+
+           }else if (data.length ==1){
+               setNumInnerHTML(data);
+           }
+            /*]]>*/
+            // /*<![CDATA[*/
+            // if (message!=event.data){
+            //     setMessageInnerHTML1(event.data);
+            // } else if (message1!=event.data){
+            //     setMessageInnerHTML(event.data);
+            // }
+            // /*]]>*/
+
+
+        }
+
+        //连接关闭的回调方法
+        websocket.onclose = function(){
+            setMessageInnerHTML("close");
+        }
+
+        //监听窗口关闭事件，当窗口关闭时，主动去关闭websocket连接，防止连接还没断开就关闭窗口，server端会抛异常。
+        window.onbeforeunload = function(){
+            websocket.close();
+        }
+
+        //将消息显示在网页上
+        function setMessageInnerHTML(innerHTML){
+            document.getElementById("message").innerHTML = innerHTML;
+        }
+        function setMessageInnerHTML1(innerHTML) {
+            document.getElementById("message1").innerHTML = innerHTML;
+        }
+        function setNumInnerHTML(innerHTML) {
+            document.getElementById("num").innerHTML = "在线人数："+innerHTML;
+        }
+
+        //关闭连接
+        function closeWebSocket(){
+            websocket.close();
+        }
+
+        // 定时监听div变化
+        var div = $("#message").text();
+        setInterval(function () {
+            var divNew = $("#message").text();
+            /*<![CDATA[*/
+            if (div !=divNew && divNew != "假如有内容"){
+                send();
+
+                div = divNew;
+            }
+            /*]]>*/
+        },100);
+
+        var div1 = $("#message1").text();
+        setInterval(function () {
+            var divNew1 = $("#message1").text();
+            /*<![CDATA[*/
+            if (div1 !=divNew1 && divNew1 != "假如有内容"){
+                send1();
+                div1 = divNew1;
+            }
+            /*]]>*/
+        },100);
+
+        var messageSize;
+        var message1Size;
+        //发送消息
+        function send(){
+            var a = document.getElementById("message").innerText;
+            var message =a+"1";
+            websocket.send(message);
+
+        }
+        function send1() {
+            var b = document.getElementById("message1").innerText;
+            var message1 = b+"2";
+            websocket.send(message1)
+        }
+
+
+        // 获取文本
+        function upload(input) {
+            //支持chrome IE10
+            if (window.FileReader) {
+                var file = input.files[0];
+                var reader = new FileReader();
+                reader.onload = function() {
+                    document.getElementById("message").innerHTML=this.result;
+                    messageSize = reader.result.length;
+                    document.getElementById("message1").innerHTML=this.result;
+                    message1Size = reader.result.length;
+                }
+                reader.readAsText(file);
+            }
+        }
+    </script>
+</head>
+
+<body>
+<input type="file" onchange="upload(this)" />
+<div>
+    <tr>
+        <p contenteditable="true" id="message">假如有内容</p>
+        <p contenteditable="true" id="message1">假如有内容</p>
+    </tr>
+</div>
+<br/>
+<div id="num">
+</div>
+<br/>
+<button type="button" onclick="send()">save</button>
+</body>
+</html>
+
