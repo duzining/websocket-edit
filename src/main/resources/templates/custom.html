@@ -1,8 +1,9 @@
 <!DOCTYPE HTML>
-<html xmlns:th="http://www.w3.org/1999/xhtml">
+<html  xmlns:th="http://www.thymeleaf.org">
 <head>
     <title>WebSocket</title>
     <script th:src="@{js/jquery.min.js}"></script>
+    <script th:src="@{js/diff_match_patch.js}"></script>
     <style>
         #message {
             min-height: 120px;
@@ -13,153 +14,235 @@
             border: 2px solid #aaa;
         }
     </style>
-    <script type="text/javascript">
-        var websocket = null;
-
-        //判断当前浏览器是否支持WebSocket
-        if('WebSocket' in window){
-            websocket = new WebSocket("ws://localhost:8080/websocket");
-        }
-        else{
-            alert('Not support websocket')
-        }
-
-        //连接发生错误的回调方法
-        websocket.onerror = function(){
-            setMessageInnerHTML("error");
-        };
-
-        //连接成功建立的回调方法
-        websocket.onopen = function(event){
-            // setMessageInnerHTML("open");
-        }
-
-        //接收到消息的回调方法
-        websocket.onmessage = function(event){
-            var data = event.data;
-            var lastStr = data[data.length-1];
-
-            /*<![CDATA[*/
-           if (lastStr =="1" && data.length>2) {
-               var message = data.substr(0, data.length - 1);
-               setMessageInnerHTML(message);
-
-           }else if (lastStr == "2" && data.length>2) {
-               var message = data.substr(0, data.length - 1);
-               setMessageInnerHTML1(message);
-
-           }else if (data.length ==1){
-               setNumInnerHTML(data);
-           }
-            /*]]>*/
-            // /*<![CDATA[*/
-            // if (message!=event.data){
-            //     setMessageInnerHTML1(event.data);
-            // } else if (message1!=event.data){
-            //     setMessageInnerHTML(event.data);
-            // }
-            // /*]]>*/
-
-
-        }
-
-        //连接关闭的回调方法
-        websocket.onclose = function(){
-            setMessageInnerHTML("close");
-        }
-
-        //监听窗口关闭事件，当窗口关闭时，主动去关闭websocket连接，防止连接还没断开就关闭窗口，server端会抛异常。
-        window.onbeforeunload = function(){
-            websocket.close();
-        }
-
-        //将消息显示在网页上
-        function setMessageInnerHTML(innerHTML){
-            document.getElementById("message").innerHTML = innerHTML;
-        }
-        function setMessageInnerHTML1(innerHTML) {
-            document.getElementById("message1").innerHTML = innerHTML;
-        }
-        function setNumInnerHTML(innerHTML) {
-            document.getElementById("num").innerHTML = "在线人数："+innerHTML;
-        }
-
-        //关闭连接
-        function closeWebSocket(){
-            websocket.close();
-        }
-
-        // 定时监听div变化
-        var div = $("#message").text();
-        setInterval(function () {
-            var divNew = $("#message").text();
-            /*<![CDATA[*/
-            if (div !=divNew && divNew != "假如有内容"){
-                send();
-
-                div = divNew;
-            }
-            /*]]>*/
-        },100);
-
-        var div1 = $("#message1").text();
-        setInterval(function () {
-            var divNew1 = $("#message1").text();
-            /*<![CDATA[*/
-            if (div1 !=divNew1 && divNew1 != "假如有内容"){
-                send1();
-                div1 = divNew1;
-            }
-            /*]]>*/
-        },100);
-
-        var messageSize;
-        var message1Size;
-        //发送消息
-        function send(){
-            var a = document.getElementById("message").innerText;
-            var message =a+"1";
-            websocket.send(message);
-
-        }
-        function send1() {
-            var b = document.getElementById("message1").innerText;
-            var message1 = b+"2";
-            websocket.send(message1)
-        }
-
-
-        // 获取文本
-        function upload(input) {
-            //支持chrome IE10
-            if (window.FileReader) {
-                var file = input.files[0];
-                var reader = new FileReader();
-                reader.onload = function() {
-                    document.getElementById("message").innerHTML=this.result;
-                    messageSize = reader.result.length;
-                    document.getElementById("message1").innerHTML=this.result;
-                    message1Size = reader.result.length;
-                }
-                reader.readAsText(file);
-            }
-        }
-    </script>
 </head>
-
 <body>
-<input type="file" onchange="upload(this)" />
+<input type="button" id="dataText"  value="刷新text" />
 <div>
-    <tr>
-        <p contenteditable="true" id="message">假如有内容</p>
-        <p contenteditable="true" id="message1">假如有内容</p>
-    </tr>
+
+    <input type="text" name="" id="message" value="假如有内容" />
+    <br/>
+    <input type="text" name="" id="message1" value="假如有内容" />
+
 </div>
 <br/>
+<div id="diff">
+</div>
 <div id="num">
 </div>
 <br/>
-<button type="button" onclick="send()">save</button>
+<div class="info">
+
+</div>
+<button type="button" onclick="save()">save</button> <button type="button" onclick="diff()">diff</button>
 </body>
+<script type="text/javascript">
+    var websocket = null;
+
+    //判断当前浏览器是否支持WebSocket
+    if('WebSocket' in window){
+        websocket = new WebSocket("ws://localhost:8080/websocket");
+    }
+    else{
+        alert('Not support websocket')
+    }
+
+    //连接发生错误的回调方法
+    websocket.onerror = function(){
+        setMessageInnerHTML("error");
+    };
+
+    //连接成功建立的回调方法
+    websocket.onopen = function(event){
+        // setMessageInnerHTML("open");
+    }
+
+    //接收到消息的回调方法
+    websocket.onmessage = function(event){
+        var data = event.data;
+        var lastStr = data[data.length-1];
+
+        /*<![CDATA[*/
+        if (lastStr =="1" && data.length>2) {
+            var message = data.substr(0, data.length - 1);
+            setMessageInnerHTML(message);
+            setMessageInnerHTML1(message);
+
+        }else if (lastStr == "2" && data.length>2) {
+            var message = data.substr(0, data.length - 1);
+            setMessageInnerHTML(message);
+            setMessageInnerHTML1(message);
+
+        }else if (data.length ==1){
+            setNumInnerHTML(data);
+        }
+        /*]]>*/
+        // /*<![CDATA[*/
+        // if (message!=event.data){
+        //     setMessageInnerHTML1(event.data);
+        // } else if (message1!=event.data){
+        //     setMessageInnerHTML(event.data);
+        // }
+        // /*]]>*/
+
+
+    }
+
+    //连接关闭的回调方法
+    websocket.onclose = function(){
+        setMessageInnerHTML("close");
+    }
+
+    //监听窗口关闭事件，当窗口关闭时，主动去关闭websocket连接，防止连接还没断开就关闭窗口，server端会抛异常。
+    window.onbeforeunload = function(){
+        websocket.close();
+    }
+
+    //将消息显示在网页上
+    function setMessageInnerHTML(innerHTML){
+        document.getElementById("message").value = innerHTML;
+    }
+    function setMessageInnerHTML1(innerHTML) {
+        document.getElementById("message1").value = innerHTML;
+    }
+    function setNumInnerHTML(innerHTML) {
+        document.getElementById("num").innerHTML = "在线人数："+innerHTML;
+    }
+    function setDiffInnerHTML(innerHTML) {
+        document.getElementById("diff").innerHTML = innerHTML;
+    }
+
+    //关闭连接
+    function closeWebSocket(){
+        websocket.close();
+    }
+
+    // 定时监听div变化
+    // var div = $("#message").val();
+    // setInterval(function () {
+    //     var divNew = $("#message").val();
+    //     /*<![CDATA[*/
+    //     if (div !=divNew && divNew != "假如有内容"){
+    //         send();
+    //
+    //         div = divNew;
+    //     }
+    //     /*]]>*/
+    // },2000);
+    //
+    // var div1 = $("#message1").val();
+    // setInterval(function () {
+    //     var divNew1 = $("#message1").val();
+    //     /*<![CDATA[*/
+    //     if (div1 !=divNew1 && divNew1 != "假如有内容"){
+    //         send1();
+    //         div1 = divNew1;
+    //     }
+    //     /*]]>*/
+    // },2000);
+    //
+    $("#message").on('input propertychange',function () {
+        console.log($("#message").val());
+        send();
+    });
+    $("#message1").on('input propertychange',function () {
+        console.log($("#message1").val());
+        send1();
+    });
+
+    //点击一个修改，另一个不能修改
+    $("#message").click(function() {
+        $("#message1").attr("disabled",true);
+    });
+    $("#message1").click(function() {
+        $("#message").attr("disabled", true);
+    });
+
+
+    //发送消息
+    function send(){
+        var a = $("#message").val();
+        var message =a+"1";
+        websocket.send(message);
+
+    }
+    function send1() {
+        var b = $("#message1").val();
+        var message1 = b+"2";
+        websocket.send(message1)
+    }
+
+
+
+    function diff() {
+        var my_text = $("#message").val();
+        var other_text = $("#message1").val();
+        var dmp = new diff_match_patch();
+        var patch_list = dmp.patch_make(other_text, my_text);
+        patch_text = dmp.patch_toText(patch_list);
+        var patches = dmp.patch_fromText(patch_text);
+        var results = dmp.patch_apply(patches, other_text);
+        setDiffInnerHTML(results[0])
+    }
+
+
+
+
+
+    $(document).ready(function () {
+        $("#dataText").click(function () {
+            $.get("/texts",function (data,status) {
+                // document.getElementById("message").value = data[0].text;
+                // document.getElementById("message1").value = data[0].text;
+                // id = data[0].id;
+                var size = data.length;
+                var html = '<table>';
+                    html += '<tbody>';
+                    html += '<tr>';
+                    html += '<th>id</th>';
+                    html += '<th>text</th>';
+                    html += '</tr>';
+                /* <![CDATA[ */
+                    for (var i = 0;i<size;i++){
+                        html +='<tr>';
+                        html +='<td id="textId'+(data[i].id)+'">'+(data[i].id)+'</td>';
+                        html +='<td id="text'+(data[i].id)+'">'+(data[i].text)+'</td>';
+                        html +='<td><input id="'+(data[i].id)+'" type="button" onclick="get(this)" value="获取" /></td> ';
+                        html +='</tr>';
+                    }
+                /* ]]> */
+                    html +='</tbody>';
+                    html +='</table>';
+                    $(".info").html(html);
+            })
+        })
+    })
+
+    var id ;
+    function get(o) {
+        var i="text"+o.id;
+        document.getElementById("message").value = $('#'+i).text();
+        document.getElementById("message1").value = $('#'+i).text();
+        id=o.id;
+    }
+
+    function save() {
+        var text = $("#diff").text();
+        var data = {
+            "id":id,
+            "text":text
+        }
+        $.ajax({
+            type:'post',
+            url:"/updateText",
+            data:JSON.stringify(data),
+            contentType:'application/json;charset=UTF-8',
+            dataType:'json',
+            success:function (data) {
+
+            }
+        })
+
+    }
+</script>
 </html>
 
