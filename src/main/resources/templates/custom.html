@@ -16,24 +16,26 @@
     </style>
 </head>
 <body>
-<input type="button" id="dataText"  value="刷新text" />
 <div>
 
-    <input type="text" name="" id="message" value="假如有内容" />
+    <input type="text"  id="message" value="假如有内容" />
     <br/>
-    <input type="text" name="" id="message1" value="假如有内容" />
+    <input type="text"  id="message1" value="假如有内容" />
+    <br/>
+    <input type="text"  id="message2" value="......" />
 
 </div>
 <br/>
 <div id="diff">
 </div>
-<div id="num">
-</div>
+<div id="num"></div>
 <br/>
 <div class="info">
 
 </div>
-<button type="button" onclick="save()">save</button> <button type="button" onclick="diff()">diff</button>
+<button type="button" onclick="save()">save</button> <button type="button" onclick="diff()">diff之后再保存</button>
+<br/>
+
 </body>
 <script type="text/javascript">
     var websocket = null;
@@ -53,43 +55,46 @@
 
     //连接成功建立的回调方法
     websocket.onopen = function(event){
-        // setMessageInnerHTML("open");
+
     }
 
     //接收到消息的回调方法
     websocket.onmessage = function(event){
         var data = event.data;
         var lastStr = data[data.length-1];
+        var Str = data.substr(0,2);
 
         /*<![CDATA[*/
-        if (lastStr =="1" && data.length>2) {
+        if (data.length>5){
+            var openStr = data.substr(data.length-4,data.length);
+        }
+        if (Str =="ID"){
+            setNumInnerHTML(data);
+        }else if (lastStr =="1" && data.length>2) {
             var message = data.substr(0, data.length - 1);
             setMessageInnerHTML(message);
-            setMessageInnerHTML1(message);
+
 
         }else if (lastStr == "2" && data.length>2) {
             var message = data.substr(0, data.length - 1);
-            setMessageInnerHTML(message);
+
             setMessageInnerHTML1(message);
 
-        }else if (data.length ==1){
-            setNumInnerHTML(data);
+        }else if(openStr =="open"){
+            setMessage(data);
+        }else if (openStr =="lose"){
+            setMessageClose(data);
         }
         /*]]>*/
-        // /*<![CDATA[*/
-        // if (message!=event.data){
-        //     setMessageInnerHTML1(event.data);
-        // } else if (message1!=event.data){
-        //     setMessageInnerHTML(event.data);
-        // }
-        // /*]]>*/
+
+
 
 
     }
 
     //连接关闭的回调方法
     websocket.onclose = function(){
-        setMessageInnerHTML("close");
+
     }
 
     //监听窗口关闭事件，当窗口关闭时，主动去关闭websocket连接，防止连接还没断开就关闭窗口，server端会抛异常。
@@ -105,10 +110,31 @@
         document.getElementById("message1").value = innerHTML;
     }
     function setNumInnerHTML(innerHTML) {
-        document.getElementById("num").innerHTML = "在线人数："+innerHTML;
+        var oldStr = document.getElementById("num").innerHTML;
+        console.log(typeof oldStr);
+        if (oldStr =="") {
+            var sessionId = innerHTML.substr(2,2);
+            var num = innerHTML[innerHTML.length-1];
+            document.getElementById("num").innerHTML = "本地sessionID:" + sessionId+ "   在线人数："+num;
+
+        }else {
+
+            var sessionId = oldStr.substr(12,2);
+            var num = innerHTML[innerHTML.length-1];
+            document.getElementById("num").innerHTML = "本地sessionID:" + sessionId + "   在线人数："+num;
+        }
+
     }
     function setDiffInnerHTML(innerHTML) {
         document.getElementById("diff").innerHTML = innerHTML;
+    }
+    function setMessage(innerHTML) {
+        var sessionId= innerHTML.substr(0,2);
+        var data = innerHTML.substr(2,innerHTML.length-1)
+        document.getElementById("message2").value = data + ",SessionID为:" +sessionId;
+    }
+    function setMessageClose(innerHTML) {
+        document.getElementById("message2").value ="没有人编辑......"
     }
 
     //关闭连接
@@ -117,45 +143,43 @@
     }
 
     // 定时监听div变化
-    // var div = $("#message").val();
-    // setInterval(function () {
-    //     var divNew = $("#message").val();
-    //     /*<![CDATA[*/
-    //     if (div !=divNew && divNew != "假如有内容"){
-    //         send();
-    //
-    //         div = divNew;
-    //     }
-    //     /*]]>*/
-    // },2000);
-    //
-    // var div1 = $("#message1").val();
-    // setInterval(function () {
-    //     var divNew1 = $("#message1").val();
-    //     /*<![CDATA[*/
-    //     if (div1 !=divNew1 && divNew1 != "假如有内容"){
-    //         send1();
-    //         div1 = divNew1;
-    //     }
-    //     /*]]>*/
-    // },2000);
-    //
+
+
     $("#message").on('input propertychange',function () {
-        console.log($("#message").val());
         send();
     });
     $("#message1").on('input propertychange',function () {
-        console.log($("#message1").val());
         send1();
     });
 
-    //点击一个修改，另一个不能修改
-    $("#message").click(function() {
-        $("#message1").attr("disabled",true);
+    var num ;
+    // 获取焦点事件
+    $("#message").focus(function () {
+        var str = document.getElementById("num").innerText;
+        var sessionId = str.substr(12,2);
+        num = sessionId+"open";
+       sendNum(num);
+
     });
-    $("#message1").click(function() {
-        $("#message").attr("disabled", true);
+    $("#message").blur(function () {
+        var str = document.getElementById("num").innerText;
+        var sessionId = str.substr(12,2);
+        $("#message").attr("disabled",false);
+        num = sessionId + "close";
+        sendNum(num);
     });
+    // $("#message1").focus(function () {
+    //
+    //     num = "open";
+    //     sendNum(num);
+    // });
+    // $("#message1").blur(function () {
+    //     // $("#message1").attr("disabled",false);
+    //     num = "close";
+    //     sendNum(num);
+    // });
+
+
 
 
     //发送消息
@@ -170,9 +194,12 @@
         var message1 = b+"2";
         websocket.send(message1)
     }
+    function sendNum(data) {
+        websocket.send(data);
+    }
 
 
-
+    //对比
     function diff() {
         var my_text = $("#message").val();
         var other_text = $("#message1").val();
@@ -187,35 +214,31 @@
 
 
 
-
-    $(document).ready(function () {
-        $("#dataText").click(function () {
-            $.get("/texts",function (data,status) {
-                // document.getElementById("message").value = data[0].text;
-                // document.getElementById("message1").value = data[0].text;
-                // id = data[0].id;
-                var size = data.length;
-                var html = '<table>';
-                    html += '<tbody>';
-                    html += '<tr>';
-                    html += '<th>id</th>';
-                    html += '<th>text</th>';
-                    html += '</tr>';
-                /* <![CDATA[ */
-                    for (var i = 0;i<size;i++){
-                        html +='<tr>';
-                        html +='<td id="textId'+(data[i].id)+'">'+(data[i].id)+'</td>';
-                        html +='<td id="text'+(data[i].id)+'">'+(data[i].text)+'</td>';
-                        html +='<td><input id="'+(data[i].id)+'" type="button" onclick="get(this)" value="获取" /></td> ';
-                        html +='</tr>';
-                    }
-                /* ]]> */
-                    html +='</tbody>';
-                    html +='</table>';
-                    $(".info").html(html);
-            })
+    //获取文本，并展现
+    function update() {
+        $.get("/texts",function (data,status) {
+            var size = data.length;
+            var html = '<table>';
+            html += '<tbody>';
+            html += '<tr>';
+            html += '<th>id</th>';
+            html += '<th>text</th>';
+            html += '</tr>';
+            /* <![CDATA[ */
+            for (var i = 0;i<size;i++){
+                html +='<tr>';
+                html +='<td id="textId'+(data[i].id)+'">'+(data[i].id)+'</td>';
+                html +='<td id="text'+(data[i].id)+'">'+(data[i].text)+'</td>';
+                html +='<td><input id="'+(data[i].id)+'" type="button" onclick="get(this)" value="获取" /></td> ';
+                html +='</tr>';
+            }
+            /* ]]> */
+            html +='</tbody>';
+            html +='</table>';
+            $(".info").html(html);
         })
-    })
+    }
+    setInterval(update,500);
 
     var id ;
     function get(o) {
@@ -225,6 +248,7 @@
         id=o.id;
     }
 
+    //保存
     function save() {
         var text = $("#diff").text();
         var data = {
@@ -243,6 +267,31 @@
         })
 
     }
+
+
+
+    function f1(){
+        var str = document.getElementById("message2").value;
+        var size = str.length;
+        var sessionId = str.substr(size-2,2);
+       console.log(sessionId)
+        var str1 = document.getElementById("num").innerText;
+        var sessionId1 = str1.substr(12,2);
+        console.log(sessionId1);
+        /*<![CDATA[*/
+        if (sessionId ==".."){
+            $("#message").attr("disabled",false);
+        }
+        if (sessionId !=".." &&sessionId !=sessionId1){
+            $("#message").attr("disabled",true);
+        }
+
+        /*]]>*/
+
+    }
+
+    setInterval(f1,100);
+
 </script>
 </html>
 

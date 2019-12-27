@@ -29,4 +29,9 @@ public class TextController {
         String sql = "update txt set text=? where id=? ";
         jdbcTemplate.update(sql,text.getText(),text.getId());
     }
+
+    @RequestMapping(value = "/hello")
+    public String hello(){
+        return "hello world";
+    }
 }
