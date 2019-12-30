@@ -7,20 +7,28 @@
     <style>
         #message {
             min-height: 120px;
+            width: 400px;
             border: 2px solid #aaa;
         }
         #message1 {
             min-height: 120px;
+            width: 400px;
             border: 2px solid #aaa;
+        }
+        #message2{
+            width: 400px;
+        }
+        #message3{
+            width: 400px;
         }
     </style>
 </head>
 <body>
 <div>
 
-    <input type="text"  id="message" value="假如有内容" />
+    <input type="text"  id="message" value="假如有内容" /> <button id="button1" type="button1" onclick="editClose()" >编辑完成</button>
     <br/>
-    <input type="text"  id="message1" value="假如有内容" />
+    <input type="text"  id="message1" value="假如有内容" /> <button id="button2" type="button2" onclick="edit2Close()" >编辑完成</button>
     <br/>
     <input type="text"  id="message2" value="文本框一................." />
     <br/>
@@ -68,7 +76,7 @@
 
         /*<![CDATA[*/
         if (data.length>5){
-            var openStr = data.substr(data.length-4,data.length);
+            var openStr = data.substr(data.length-5,data.length);
         }
         if (Str =="ID"){
             setNumInnerHTML(data);
@@ -82,10 +90,17 @@
 
             setMessageInnerHTML1(message);
 
-        }else if(openStr =="open"){
+        }else if(openStr =="1open"){
             setMessageOpen(data);
-        }else if (openStr =="lose"){
+        }else if (openStr =="1lose"){
             setMessageClose(data);
+        }else if (openStr =="2open"){
+            setMessage2Open(data);
+        }else if (openStr =="2lose"){
+            setMessage2Close(data);
+        }else if(data.length ==3){
+            setClose(data);
+            closeUpdate();
         }
         /*]]>*/
 
@@ -131,11 +146,25 @@
     }
     function setMessageOpen(innerHTML) {
         var sessionId= innerHTML.substr(0,9);
-        var data = innerHTML.substr(9,innerHTML.length-22)
+        var data = innerHTML.substr(9,innerHTML.length-23)
         document.getElementById("message2").value = data + ",SessionID为:" +sessionId;
     }
+    function setMessage2Open(innerHTML) {
+        var sessionId= innerHTML.substr(0,9);
+        var data = innerHTML.substr(9,innerHTML.length-23)
+        document.getElementById("message3").value = data + ",SessionID为:" +sessionId;
+    }
     function setMessageClose(innerHTML) {
-        document.getElementById("message2").value ="没有人编辑............"
+        document.getElementById("message2").value ="文本框一没有人编辑............"
+    }
+    function setMessage2Close(innerHTML) {
+        document.getElementById("message3").value ="文本框二没有人编辑............"
+    }
+    function setClose(innerHTML) {
+        var str = document.getElementById("num").innerText;
+        var sessionId = str.substr(12,9);
+        var num = innerHTML.substr(0,1);
+        document.getElementById("num").innerHTML = "本地sessionID:" + sessionId + "   在线人数："+num;
     }
 
     //关闭连接
@@ -158,29 +187,31 @@
     $("#message").focus(function () {
         var str = document.getElementById("num").innerText;
         var sessionId = str.substr(12,9);
-        num = sessionId+"open";
+        num = sessionId+ "1" +"open";
         console.log(num);
        sendNum(num);
 
     });
-    $("#message").blur(function () {
-        var str = document.getElementById("num").innerText;
-        var sessionId = str.substr(12,9);
-        $("#message").attr("disabled",false);
-        num = sessionId + "close";
-        sendNum(num);
-    });
+    // $("#message").blur(function () {
+    //     var str = document.getElementById("num").innerText;
+    //     var sessionId = str.substr(12,9);
+    //     $("#message").attr("disabled",false);
+    //     num = sessionId +"1"+ "lose";
+    //     sendNum(num);
+    // });
     $("#message1").focus(function () {
 
         var str = document.getElementById("num").innerText;
         var sessionId = str.substr(12,9);
-        num = sessionId+"open";
+        num = sessionId+"2"+"open";
         console.log(num);
         sendNum(num);
     });
     // $("#message1").blur(function () {
-    //     // $("#message1").attr("disabled",false);
-    //     num = "close";
+    //     var str = document.getElementById("num").innerText;
+    //     var sessionId = str.substr(12,9);
+    //     $("#message1").attr("disabled",false);
+    //     num = sessionId +"2"+ "lose";
     //     sendNum(num);
     // });
 
@@ -243,7 +274,7 @@
             $(".info").html(html);
         })
     }
-    setInterval(update,100);
+    setInterval(update,500);
 
     var id ;
     function get(o) {
@@ -284,17 +315,59 @@
         /*<![CDATA[*/
         if (sessionId =="........."){
             $("#message").attr("disabled",false);
+            $("#button1").attr("disabled",false);
         }
         if (sessionId !="........." &&sessionId !=sessionId1){
             $("#message").attr("disabled",true);
+            $("#button1").attr("disabled",true);
         }
 
         /*]]>*/
 
     }
+    function f2(){
+        var str = document.getElementById("message3").value;
+        var size = str.length
+        var sessionId = str.substr(size-9,9);
+        var str1 = document.getElementById("num").innerText;
+        var sessionId1 = str1.substr(12,9);
+        /*<![CDATA[*/
+        if (sessionId =="........."){
+            $("#message1").attr("disabled",false);
+            $("#button2").attr("disabled",false);
+        }
+        if (sessionId !="........." &&sessionId !=sessionId1){
+            $("#message1").attr("disabled",true);
+            $("#button2").attr("disabled",true);
+        }
+
+        /*]]>*/
+    }
 
     setInterval(f1,100);
+    setInterval(f2,100);
 
+    //编辑完成
+    function editClose() {
+        var str = document.getElementById("num").innerText;
+        var sessionId = str.substr(12,9);
+        $("#message").attr("disabled",false);
+        num = sessionId +"1"+ "lose";
+        sendNum(num);
+    }
+
+    function edit2Close() {
+        var str = document.getElementById("num").innerText;
+        var sessionId = str.substr(12,9);
+        $("#message1").attr("disabled",false);
+        num = sessionId +"2"+ "lose";
+        sendNum(num);
+    }
+
+    function closeUpdate() {
+        $("#button1").attr("disabled",false);
+        $("#button2").attr("disabled",false);
+    }
 </script>
 </html>
 

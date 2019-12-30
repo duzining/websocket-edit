@@ -44,10 +44,14 @@ public class CustomWebSocket {
         String message = Integer.toString(getOnlineCount());
         String sessionId = session.getId();
         int size = session.toString().length();
+        if (size ==46){
         String sessionStr = session.toString().substring(37,46);
         log.info(sessionStr);
         log.info("ID"+sessionStr+message);
         sendAll("ID"+sessionStr+message);
+        }else {
+            log.info(Integer.toString(size));
+        }
     }
 
     @OnClose
@@ -57,6 +61,7 @@ public class CustomWebSocket {
         subOnlineCount();
         log.info("有人关闭连接。当前在线人数为："+getOnlineCount());
         String message = Integer.toString(getOnlineCount());
+        message = message + "ID";
         sendAll(message);
     }
 
@@ -71,11 +76,11 @@ public class CustomWebSocket {
 
         int size = message.length();
         if (size>9) {
-            str = message.substring(9, size);
+            str = message.substring(10, size);
         }else {
             str =message;
         }
-        if(!(str.equals("open"))&&!(str.equals("close"))) {
+        if(!(str.equals("open"))&&!(str.equals("lose"))) {
             log.info("客户端发送的消息：" + message.substring(0, size - 1));
         }
         if (str.equals("open")){
@@ -83,7 +88,7 @@ public class CustomWebSocket {
             OpenNum=1;
             message =sessionStr+OpenNum+openStr+message;
         }
-        if (str.equals("close")){
+        if (str.equals("lose")){
             String sessionId = session.getId();
             OpenNum=0;
             message = sessionId+OpenNum+closeStr+message;
