@@ -22,7 +22,9 @@
     <br/>
     <input type="text"  id="message1" value="假如有内容" />
     <br/>
-    <input type="text"  id="message2" value="......" />
+    <input type="text"  id="message2" value="文本框一................." />
+    <br/>
+    <input type="text"  id="message3" value="文本框二................." />
 
 </div>
 <br/>
@@ -81,7 +83,7 @@
             setMessageInnerHTML1(message);
 
         }else if(openStr =="open"){
-            setMessage(data);
+            setMessageOpen(data);
         }else if (openStr =="lose"){
             setMessageClose(data);
         }
@@ -111,15 +113,14 @@
     }
     function setNumInnerHTML(innerHTML) {
         var oldStr = document.getElementById("num").innerHTML;
-        console.log(typeof oldStr);
         if (oldStr =="") {
-            var sessionId = innerHTML.substr(2,2);
+            var sessionId = innerHTML.substr(2,9);
             var num = innerHTML[innerHTML.length-1];
             document.getElementById("num").innerHTML = "本地sessionID:" + sessionId+ "   在线人数："+num;
 
         }else {
 
-            var sessionId = oldStr.substr(12,2);
+            var sessionId = oldStr.substr(12,9);
             var num = innerHTML[innerHTML.length-1];
             document.getElementById("num").innerHTML = "本地sessionID:" + sessionId + "   在线人数："+num;
         }
@@ -128,13 +129,13 @@
     function setDiffInnerHTML(innerHTML) {
         document.getElementById("diff").innerHTML = innerHTML;
     }
-    function setMessage(innerHTML) {
-        var sessionId= innerHTML.substr(0,2);
-        var data = innerHTML.substr(2,innerHTML.length-1)
+    function setMessageOpen(innerHTML) {
+        var sessionId= innerHTML.substr(0,9);
+        var data = innerHTML.substr(9,innerHTML.length-22)
         document.getElementById("message2").value = data + ",SessionID为:" +sessionId;
     }
     function setMessageClose(innerHTML) {
-        document.getElementById("message2").value ="没有人编辑......"
+        document.getElementById("message2").value ="没有人编辑............"
     }
 
     //关闭连接
@@ -156,23 +157,27 @@
     // 获取焦点事件
     $("#message").focus(function () {
         var str = document.getElementById("num").innerText;
-        var sessionId = str.substr(12,2);
+        var sessionId = str.substr(12,9);
         num = sessionId+"open";
+        console.log(num);
        sendNum(num);
 
     });
     $("#message").blur(function () {
         var str = document.getElementById("num").innerText;
-        var sessionId = str.substr(12,2);
+        var sessionId = str.substr(12,9);
         $("#message").attr("disabled",false);
         num = sessionId + "close";
         sendNum(num);
     });
-    // $("#message1").focus(function () {
-    //
-    //     num = "open";
-    //     sendNum(num);
-    // });
+    $("#message1").focus(function () {
+
+        var str = document.getElementById("num").innerText;
+        var sessionId = str.substr(12,9);
+        num = sessionId+"open";
+        console.log(num);
+        sendNum(num);
+    });
     // $("#message1").blur(function () {
     //     // $("#message1").attr("disabled",false);
     //     num = "close";
@@ -238,7 +243,7 @@
             $(".info").html(html);
         })
     }
-    setInterval(update,500);
+    setInterval(update,100);
 
     var id ;
     function get(o) {
@@ -272,17 +277,15 @@
 
     function f1(){
         var str = document.getElementById("message2").value;
-        var size = str.length;
-        var sessionId = str.substr(size-2,2);
-       console.log(sessionId)
+        var size = str.length
+        var sessionId = str.substr(size-9,9);
         var str1 = document.getElementById("num").innerText;
-        var sessionId1 = str1.substr(12,2);
-        console.log(sessionId1);
+        var sessionId1 = str1.substr(12,9);
         /*<![CDATA[*/
-        if (sessionId ==".."){
+        if (sessionId =="........."){
             $("#message").attr("disabled",false);
         }
-        if (sessionId !=".." &&sessionId !=sessionId1){
+        if (sessionId !="........." &&sessionId !=sessionId1){
             $("#message").attr("disabled",true);
         }
 

@@ -29,6 +29,8 @@ public class CustomWebSocket {
 
     private static String closeStr = "人在编辑";
 
+    private static String str;
+
 
 
 
@@ -41,8 +43,11 @@ public class CustomWebSocket {
         log.info("新连接接入。当前在线人数为：" +getOnlineCount());
         String message = Integer.toString(getOnlineCount());
         String sessionId = session.getId();
-        log.info(sessionId);
-        sendAll("ID"+sessionId+message);
+        int size = session.toString().length();
+        String sessionStr = session.toString().substring(37,46);
+        log.info(sessionStr);
+        log.info("ID"+sessionStr+message);
+        sendAll("ID"+sessionStr+message);
     }
 
     @OnClose
@@ -65,14 +70,18 @@ public class CustomWebSocket {
     public void onMessage(String message, Session session) throws IOException{
 
         int size = message.length();
-        String str= message.substring(2,size);
+        if (size>9) {
+            str = message.substring(9, size);
+        }else {
+            str =message;
+        }
         if(!(str.equals("open"))&&!(str.equals("close"))) {
             log.info("客户端发送的消息：" + message.substring(0, size - 1));
         }
         if (str.equals("open")){
-            String sessionId = session.getId();
+            String sessionStr = session.toString().substring(37,46);
             OpenNum=1;
-            message =sessionId+OpenNum+openStr+message;
+            message =sessionStr+OpenNum+openStr+message;
         }
         if (str.equals("close")){
             String sessionId = session.getId();
